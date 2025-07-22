@@ -1,4 +1,5 @@
 "use client";
+import FormInput from "@/components/common/form-input";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,7 +30,7 @@ const Login = () => {
 
   const onSubmit = form.handleSubmit(async (data) => {
     console.log(data);
-  })
+  });
   return (
     <Card>
       <CardHeader className="text-center">
@@ -41,41 +42,19 @@ const Login = () => {
       <CardContent>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-4">
-            <FormField
-              control={form.control}
+            <FormInput
+              form={form}
+              type="email"
               name="email"
-              render={({ field: { ...rest } }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...rest}
-                      type="email"
-                      placeholder="Enter your email"
-                      autoComplete="off"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-xs" />
-                </FormItem>
-              )}
+              label="Email"
+              placeholder="Enter your email"
             />
-            <FormField
-              control={form.control}
+            <FormInput
+              form={form}
+              type="password"
               name="password"
-              render={({ field: { ...rest } }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...rest}
-                      type="password"
-                      placeholder="Enter your password"
-                      autoComplete="off"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-xs" />
-                </FormItem>
-              )}
+              label="Password"
+              placeholder="Enter your password"
             />
             <Button type="submit">Login</Button>
           </form>
