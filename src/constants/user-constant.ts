@@ -1,0 +1,1 @@
+export const HEADER_TABLE_USER = ["Name", "ID", "Role", "Action"]

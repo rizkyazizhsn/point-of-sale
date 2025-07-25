@@ -4,3 +4,10 @@ export type AuthFormState = {
   status?: string;
   errors?: Partial<Record<AuthErrorFields, string[]>>;
 };
+
+export type Profile = {
+  id?: string;
+  name?: string;
+  role?: string;
+  avatar_url?: string;
+}
