@@ -7,14 +7,20 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
+import PaginationDataTable from "./pagination-data-table";
 
 type Props = {
   header: string[];
   data: (string | React.ReactNode)[][];
   isLoading?: boolean;
+  totalPages: number;
+  currentPage: number;
+  currentLimit: number;
+  onChangePage: (page: number) => void;
+  onChangeLimit: (limit: number) => void;
 };
 
-const DataTable = ({ header, data, isLoading }: Props) => {
+const DataTable = ({ header, data, isLoading, currentLimit, totalPages, currentPage, onChangePage, onChangeLimit }: Props) => {
   return (
     <div className="w-full flex flex-col gap-4">
       <Card className="p-0">
@@ -55,6 +61,12 @@ const DataTable = ({ header, data, isLoading }: Props) => {
           </TableBody>
         </Table>
       </Card>
+      <div className="flex items-center justify-between">
+        <div></div>
+        {totalPages > 1 && (
+          <PaginationDataTable currentPage={currentPage} currentLimit={currentLimit} totalPages={totalPages} onChangePage={onChangePage} onChangeLimit={onChangeLimit} />
+        )}
+      </div>
     </div>
   );
 };
