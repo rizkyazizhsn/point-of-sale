@@ -1,4 +1,7 @@
+import { LIMIT_LISTS } from "@/constants/data-table-constant";
 import { Card } from "../ui/card";
+import { Label } from "../ui/label";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../ui/select";
 import {
   Table,
   TableBody,
@@ -20,7 +23,16 @@ type Props = {
   onChangeLimit: (limit: number) => void;
 };
 
-const DataTable = ({ header, data, isLoading, currentLimit, totalPages, currentPage, onChangePage, onChangeLimit }: Props) => {
+const DataTable = ({
+  header,
+  data,
+  isLoading,
+  currentLimit,
+  totalPages,
+  currentPage,
+  onChangePage,
+  onChangeLimit,
+}: Props) => {
   return (
     <div className="w-full flex flex-col gap-4">
       <Card className="p-0">
@@ -38,7 +50,10 @@ const DataTable = ({ header, data, isLoading, currentLimit, totalPages, currentP
             {data.map((row, rowIndex) => (
               <TableRow key={`tr-${rowIndex}`}>
                 {row.map((cell, cellIndex) => (
-                  <TableCell key={`tc-${rowIndex}-${cellIndex}`} className="px-6 py-3">
+                  <TableCell
+                    key={`tc-${rowIndex}-${cellIndex}`}
+                    className="px-6 py-3"
+                  >
                     {cell}
                   </TableCell>
                 ))}
@@ -62,9 +77,32 @@ const DataTable = ({ header, data, isLoading, currentLimit, totalPages, currentP
         </Table>
       </Card>
       <div className="flex items-center justify-between">
-        <div></div>
+        <div className="flex items-center gap-2">
+            <Label>Limit</Label>
+            <Select value={currentLimit.toString()} onValueChange={(value) => onChangeLimit(parseInt(value))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Limit" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Limit</SelectLabel>
+                  {LIMIT_LISTS.map((limit) => (
+                    <SelectItem key={limit} value={limit.toString()}>
+                      {limit}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+        </div>
         {totalPages > 1 && (
-          <PaginationDataTable currentPage={currentPage} currentLimit={currentLimit} totalPages={totalPages} onChangePage={onChangePage} onChangeLimit={onChangeLimit} />
+          <PaginationDataTable
+            currentPage={currentPage}
+            currentLimit={currentLimit}
+            totalPages={totalPages}
+            onChangePage={onChangePage}
+            onChangeLimit={onChangeLimit}
+          />
         )}
       </div>
     </div>
