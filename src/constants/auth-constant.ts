@@ -38,3 +38,10 @@ export const INITIAL_STATE_CREATE_USER = {
     avatar_url: []
   }
 }
+
+export const ROLE_LIST = [
+  { value: "admin", label: "Admin" },
+  { value: "kitchen", label: "Kitchen" },
+  { value: "kasir", label: "Kasir" },
+  { value: "user", label: "User" },
+]

@@ -12,6 +12,7 @@ import { Form } from "@/components/ui/form";
 import {
   INITIAL_CREATE_USER_FORM,
   INITIAL_STATE_CREATE_USER,
+  ROLE_LIST,
 } from "@/constants/auth-constant";
 import {
   CreateUserForm,
@@ -23,6 +24,7 @@ import React, { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { createUser } from "../actions";
+import FormSelect from "@/components/common/form-select";
 
 const DialogCreateUser = ({ refetch }: { refetch: () => void }) => {
   const form = useForm<CreateUserForm>({
@@ -82,11 +84,11 @@ const DialogCreateUser = ({ refetch }: { refetch: () => void }) => {
             label="Email"
             placeholder="Enter your email"
           />
-          <FormInput
+          <FormSelect
             form={form}
             name="role"
             label="Role"
-            placeholder="Enter your role"
+            selectItem={ROLE_LIST}
           />
           <FormInput
             form={form}
