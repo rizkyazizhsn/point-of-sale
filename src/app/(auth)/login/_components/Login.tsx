@@ -24,8 +24,6 @@ const Login = () => {
     defaultValues: INITIAL_LOGIN_FORM,
   });
 
-
-
   const [loginState, loginAction, isPendingLogin] = useActionState(login, INITIAL_STATE_LOGIN_FORM)
 
   const onSubmit = form.handleSubmit(async (data) => {
