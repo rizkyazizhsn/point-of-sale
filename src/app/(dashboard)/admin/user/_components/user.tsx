@@ -10,23 +10,36 @@ import { useDataTable } from "@/hooks/use-data-table";
 import { createClient } from "@/lib/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil, Trash2 } from "lucide-react";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import DialogCreateUser from "./dialog-create-user";
+import { Profile } from "@/types/auth";
+import DialogUpdateUser from "./dialog-update-user";
 
 const UserManagement = () => {
   const supabase = createClient();
-  const { currentLimit, currentPage, currentSearch, handleChangeLimit, handleChangePage, handleChangeSearch } = useDataTable();
+  const {
+    currentLimit,
+    currentPage,
+    currentSearch,
+    handleChangeLimit,
+    handleChangePage,
+    handleChangeSearch,
+  } = useDataTable();
 
-  const { data: users, isLoading, refetch } = useQuery({
+  const {
+    data: users,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["users", currentPage, currentLimit, currentSearch],
     queryFn: async () => {
       const result = await supabase
         .from("profiles")
         .select("*", { count: "exact" })
-        .range((currentPage -1) * currentLimit, currentPage * currentLimit -1)
+        .range((currentPage - 1) * currentLimit, currentPage * currentLimit - 1)
         .order("created_at")
-        .ilike('name', `%${currentSearch}%`);
+        .ilike("name", `%${currentSearch}%`);
 
       if (result.error)
         toast.error("Get users failed", { description: result.error.message });
@@ -34,6 +47,15 @@ const UserManagement = () => {
       return result;
     },
   });
+
+  const [selectedAction, setSelectedAction] = useState<{
+    data: Profile;
+    type: "update" | "delete";
+  } | null>(null);
+
+  const handleChangeAction = (open: boolean) => {
+    if (!open) setSelectedAction(null);
+  };
 
   const filteredData = useMemo(() => {
     return (users?.data || []).map((user, index) => {
@@ -52,7 +74,13 @@ const UserManagement = () => {
                   Edit
                 </span>
               ),
-              variant: "default"
+              variant: "default",
+              action: () => {
+                setSelectedAction({
+                  data: user,
+                  type: 'update'
+                })
+              }
             },
             {
               label: (
@@ -70,15 +98,20 @@ const UserManagement = () => {
   }, [users]);
 
   const totalPages = useMemo(() => {
-    return users && users.count !== null ? Math.ceil(users.count / currentLimit) : 0
-  }, [users])
+    return users && users.count !== null
+      ? Math.ceil(users.count / currentLimit)
+      : 0;
+  }, [users]);
 
   return (
     <div className="w-full">
       <div className="flex flex-col lg:flex-row mb-4 gap-2 justify-between w-full">
         <h1 className="text-2xl font-bold">User Management</h1>
         <div className="flex gap-2">
-          <Input placeholder="Search by name" onChange={(e) => handleChangeSearch(e.target.value)} />
+          <Input
+            placeholder="Search by name"
+            onChange={(e) => handleChangeSearch(e.target.value)}
+          />
           <Dialog>
             <DialogTrigger asChild>
               <Button variant={"outline"}>Create</Button>
@@ -96,6 +129,12 @@ const UserManagement = () => {
         currentLimit={currentLimit}
         onChangePage={handleChangePage}
         onChangeLimit={handleChangeLimit}
+      />
+      <DialogUpdateUser
+        open={selectedAction !== null && selectedAction.type === "update"}
+        refetch={refetch}
+        currentData={selectedAction?.data}
+        handleChangeAction={handleChangeAction}
       />
     </div>
   );
