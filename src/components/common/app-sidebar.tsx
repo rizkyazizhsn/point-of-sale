@@ -87,7 +87,7 @@ const AppSidebar = () => {
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar className="size-8 rounded-lg">
-                    <AvatarImage src={profile.avatar_url} alt={profile.name} />
+                    <AvatarImage src={profile.avatar_url} alt={profile.name} className="object-cover" />
                     <AvatarFallback className="rounded-lg">
                       {profile.name?.charAt(0)}
                     </AvatarFallback>
@@ -114,6 +114,7 @@ const AppSidebar = () => {
                       <AvatarImage
                         src={profile.avatar_url}
                         alt={profile.name}
+                        className="object-cover"
                       />
                       <AvatarFallback className="rounded-lg">
                         {profile.name?.charAt(0)}
