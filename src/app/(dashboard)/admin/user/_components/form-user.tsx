@@ -17,16 +17,7 @@ import { Loader2 } from "lucide-react";
 import React, { FormEvent } from "react";
 import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 
-type FormUserProps<T extends FieldValues> = {
-  form: UseFormReturn<T>;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  isLoading: boolean;
-  type: "Create" | "Update";
-  preview?: Preview;
-  setPreview?: (preview: Preview) => void;
-};
-
-const FormUser = <T extends FieldValues> ({
+const FormUser = <T extends FieldValues>({
   form,
   onSubmit,
   isLoading,
@@ -95,7 +86,8 @@ const FormUser = <T extends FieldValues> ({
               <Button variant={"outline"}>Cancel</Button>
             </DialogClose>
             <Button type="submit">
-              {isLoading ? <Loader2 className="animate-spin" /> : type}
+              {isLoading && <Loader2 className="animate-spin" />}
+              {type}
             </Button>
           </DialogFooter>
         </form>

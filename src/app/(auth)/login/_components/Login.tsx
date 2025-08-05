@@ -9,7 +9,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
-import { INITIAL_LOGIN_FORM, INITIAL_STATE_LOGIN_FORM } from "@/constants/auth-constant";
+import {
+  INITIAL_LOGIN_FORM,
+  INITIAL_STATE_LOGIN_FORM,
+} from "@/constants/auth-constant";
 import { LoginForm, loginSchemaForm } from "@/validations/auth-validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { startTransition, useActionState, useEffect } from "react";
@@ -24,29 +27,32 @@ const Login = () => {
     defaultValues: INITIAL_LOGIN_FORM,
   });
 
-  const [loginState, loginAction, isPendingLogin] = useActionState(login, INITIAL_STATE_LOGIN_FORM)
+  const [loginState, loginAction, isPendingLogin] = useActionState(
+    login,
+    INITIAL_STATE_LOGIN_FORM
+  );
 
   const onSubmit = form.handleSubmit(async (data) => {
-    const formData = new FormData()
+    const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      formData.append(key, value)
-    })
+      formData.append(key, value);
+    });
 
     startTransition(() => {
-      loginAction(formData)
-    })
+      loginAction(formData);
+    });
   });
 
   useEffect(() => {
     if (loginState.status === "error") {
-      toast.error('Login Failed', {
-        description: loginState.errors._form?.[0]
-      })
+      toast.error("Login Failed", {
+        description: loginState.errors._form?.[0],
+      });
       startTransition(() => {
-        loginAction(null)
-      })
+        loginAction(null);
+      });
     }
-  }, [loginState])
+  }, [loginState]);
 
   return (
     <Card>
@@ -73,7 +79,10 @@ const Login = () => {
               label="Password"
               placeholder="Enter your password"
             />
-            <Button type="submit">{isPendingLogin ? <Loader2 className="animate-spin" /> : "Login"}</Button>
+            <Button type="submit" disabled={isPendingLogin}>
+              {isPendingLogin &&  <Loader2 className="animate-spin" /> }
+              Login
+            </Button>
           </form>
         </Form>
       </CardContent>

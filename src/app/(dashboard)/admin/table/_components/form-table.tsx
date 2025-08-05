@@ -1,4 +1,3 @@
-import FormImage from "@/components/common/form-image";
 import FormInput from "@/components/common/form-input";
 import FormSelect from "@/components/common/form-select";
 import { Button } from "@/components/ui/button";
@@ -11,13 +10,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { AVAILABILITY_LIST, CATEGORY_LIST } from "@/constants/menu-constant";
+import { STATUS_LIST } from "@/constants/table-constant";
 import { Preview } from "@/types/general";
 import { Loader2 } from "lucide-react";
 import React, { FormEvent } from "react";
 import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 
-const FormMenu = <T extends FieldValues>({
+const FormTable = <T extends FieldValues>({
   form,
   onSubmit,
   isLoading,
@@ -36,9 +35,11 @@ const FormMenu = <T extends FieldValues>({
     <DialogContent className="sm:max-w-[425px]">
       <Form {...form}>
         <DialogHeader>
-          <DialogTitle>{type} Menu</DialogTitle>
+          <DialogTitle>{type} Table</DialogTitle>
           <DialogDescription>
-            {type === "Create" ? "Add a new menu." : "Update menu information."}
+            {type === "Create"
+              ? "Add a new table."
+              : "Update table information."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -46,47 +47,27 @@ const FormMenu = <T extends FieldValues>({
             form={form}
             name={"name" as Path<T>}
             label="Name"
-            placeholder="Enter menu name"
+            placeholder="Enter table name"
           />
           <FormInput
             form={form}
             name={"description" as Path<T>}
             label="Name"
-            placeholder="Enter menu description"
+            placeholder="Enter table description"
             type="textarea"
           />
           <FormInput
             form={form}
-            name={"price" as Path<T>}
-            label="Price"
-            placeholder="Enter menu price"
-            type="number"
-          />
-          <FormInput
-            form={form}
-            name={"discount" as Path<T>}
-            label="Discount"
-            placeholder="Enter menu discount"
+            name={"capacity" as Path<T>}
+            label="Capacity"
+            placeholder="Enter table capacity"
             type="number"
           />
           <FormSelect
             form={form}
-            name={"category" as Path<T>}
-            label="Category"
-            selectItem={CATEGORY_LIST}
-          />
-          <FormImage
-            form={form}
-            name={"image_url" as Path<T>}
-            label="Image"
-            preview={preview}
-            setPreview={setPreview}
-          />
-          <FormSelect
-            form={form}
-            name={"is_available" as Path<T>}
-            label="Availability"
-            selectItem={AVAILABILITY_LIST}
+            name={"status" as Path<T>}
+            label="Status"
+            selectItem={STATUS_LIST}
           />
           <DialogFooter>
             <DialogClose asChild>
@@ -103,4 +84,4 @@ const FormMenu = <T extends FieldValues>({
   );
 };
 
-export default FormMenu;
+export default FormTable;

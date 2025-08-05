@@ -41,7 +41,8 @@ const DialogDelete = ({
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
               <Button formAction={onSubmit} variant="destructive">
-                {isLoading ? <Loader2 className="animate-spin" /> : "Delete"}
+                {isLoading && <Loader2 className="animate-spin" /> }
+                Delete
               </Button>
             </DialogFooter>
           </DialogHeader>
