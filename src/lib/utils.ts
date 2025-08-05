@@ -7,11 +7,19 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getImageData(event: ChangeEvent<HTMLInputElement>) {
-  const file = event.target.files![0]
-  const displayUrl = URL.createObjectURL(event.target.files![0])
+  const file = event.target.files![0];
+  const displayUrl = URL.createObjectURL(event.target.files![0]);
 
   return {
     file,
-    displayUrl
-  }
+    displayUrl,
+  };
+}
+
+export function convertIDR(number: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(number);
 }

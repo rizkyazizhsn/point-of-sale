@@ -24,7 +24,7 @@ export async function createClient({ isAdmin = false }: CreateClientOptions = {}
               cookieStore.set(name, value, options)
             );
           } catch {
-            console.error("Erro setting cookies", cookiesToSet);
+            console.error("Error setting cookies", cookiesToSet);
           }
         },
       },
