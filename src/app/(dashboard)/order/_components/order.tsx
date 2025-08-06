@@ -1,0 +1,238 @@
+"use client";
+
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import React, { startTransition, useActionState, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import { useDataTable } from "@/hooks/use-data-table";
+import DataTable from "@/components/common/data-table";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import DropdownAction from "@/components/common/dropdown-action";
+import { HEADER_TABLE_ORDER } from "@/constants/order-constant";
+import { Order } from "@/validations/order-validation";
+import DialogCreateOrder from "./dialog-create-order";
+import { updateReservation } from "../actions";
+import { INITIAL_STATE_ACTION } from "@/constants/general-constant";
+import { Ban, Link2Icon, ScrollText } from "lucide-react";
+import Link from "next/link";
+
+const OrderManagement = () => {
+  const supabase = createClient();
+  const {
+    currentLimit,
+    currentPage,
+    currentSearch,
+    handleChangeLimit,
+    handleChangePage,
+    handleChangeSearch,
+  } = useDataTable();
+
+  const {
+    data: orders,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["orders", currentPage, currentLimit, currentSearch],
+    queryFn: async () => {
+      const query = supabase
+        .from("orders")
+        .select(
+          "id, order_id, customer_name, status, payment_url, tables (name, id)",
+          {
+            count: "exact",
+          }
+        )
+        .range((currentPage - 1) * currentLimit, currentPage * currentLimit - 1)
+        .order("created_at");
+
+      if (currentSearch) {
+        query.or(
+          `order_id.like.%${currentSearch}%,customer_name.like.%${currentSearch}%,status.like.%${currentSearch}%`
+        );
+      }
+
+      const result = await query;
+
+      if (result.error)
+        toast.error("Get order failed", { description: result.error.message });
+
+      return result;
+    },
+  });
+
+  const { data: tables, refetch: refetchTables } = useQuery({
+    queryKey: ["tables"],
+    queryFn: async () => {
+      const result = await supabase
+        .from("tables")
+        .select("*")
+        .order("created_at")
+        .order("status");
+
+      return result.data;
+    },
+  });
+
+  const [selectedAction, setSelectedAction] = useState<{
+    data: Order;
+    type: "update" | "delete";
+  } | null>(null);
+
+  const handleChangeAction = (open: boolean) => {
+    if (!open) setSelectedAction(null);
+  };
+
+  const  [reservedState, reservedAction] = useActionState(updateReservation, INITIAL_STATE_ACTION);
+
+  const handleReservation = async ({
+    id,
+    table_id,
+    status,
+  }: {
+    id: string;
+    table_id: string;
+    status: string;
+  }) => {
+    const formData = new FormData();
+    Object.entries({ id, table_id, status }).forEach(([key, value]) => {
+      formData.append(key, value);
+    })
+    startTransition(() => {
+      reservedAction(formData)
+    })
+  }
+
+  useEffect(() => {
+    if (reservedState.status === "error") {
+      toast.error("Update Reservation Failed", {
+        description: reservedState.errors?._form?.[0]
+      })
+    }
+
+    if (reservedState.status === "success") {
+      toast.success("Update Reservation Success")
+      refetch()
+      refetchTables()
+    }
+  })
+
+  const reservedActionList = [
+    {
+      label: (
+        <span className="flex items-center gap-2">
+          <Link2Icon className="text-sky-500" />
+          Process
+        </span>
+      ),
+      action: (id: string, table_id: string) => {
+        handleReservation({ id, table_id, status: "process" })
+      }
+    },
+    {
+      label: (
+        <span className="flex items-center gap-2">
+          <Ban className="text-red-500" />
+          Cancel
+        </span>
+      ),
+      action: (id: string, table_id: string) => {
+        handleReservation({ id, table_id, status: "canceled" })
+      }
+    }
+  ]
+
+  const filteredData = useMemo(() => {
+    return (orders?.data || []).map((order, index) => {
+      return [
+        currentLimit * (currentPage - 1) + index + 1,
+        order.order_id,
+        order.customer_name,
+        (order.tables as unknown as { name: string }).name,
+        <div
+          key={order.id}
+          className={cn("px-2 py-1 rounded-full text-white w-fit capitalize", {
+            "bg-lime-600": order.status === "settled",
+            "bg-sky-500": order.status === "process",
+            "bg-amber-500": order.status === "reserved",
+            "bg-red-500": order.status === "canceled",
+          })}
+        >
+          {order.status}
+        </div>,
+        <DropdownAction
+          key={order.id}
+          menu={
+            order.status === 'reserved' ? reservedActionList.map((item) => ({
+              label: item.label,
+              action: () => item.action(order.id, (order.tables as unknown as { id: string }).id)
+            })) : [
+              {
+                label: (
+                  <Link href={`/order/${order.order_id}`} className="flex items-center gap-2">
+                    <ScrollText className="text-sky-500" />
+                    Detail
+                  </Link>
+                ),
+                type: 'link'
+              }
+            ]
+          }
+        />,
+      ];
+    });
+  }, [orders]);
+
+  const totalPages = useMemo(() => {
+    return orders && orders.count !== null
+      ? Math.ceil(orders.count / currentLimit)
+      : 0;
+  }, [orders]);
+
+  return (
+    <div className="w-full">
+      <div className="flex flex-col lg:flex-row mb-4 gap-2 justify-between w-full">
+        <h1 className="text-2xl font-bold">Table Management</h1>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search by name"
+            onChange={(e) => handleChangeSearch(e.target.value)}
+          />
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant={"outline"}>Create</Button>
+            </DialogTrigger>
+            <DialogCreateOrder tables={tables} refetch={refetch} />
+          </Dialog>
+        </div>
+      </div>
+      <DataTable
+        header={HEADER_TABLE_ORDER}
+        data={filteredData}
+        isLoading={isLoading}
+        totalPages={totalPages}
+        currentPage={currentPage}
+        currentLimit={currentLimit}
+        onChangePage={handleChangePage}
+        onChangeLimit={handleChangeLimit}
+      />
+      {/* <DialogUpdateTable
+        open={selectedAction !== null && selectedAction.type === "update"}
+        refetch={refetch}
+        currentData={selectedAction?.data}
+        handleChangeAction={handleChangeAction}
+      />
+
+      <DialogDeleteTable
+        open={selectedAction !== null && selectedAction.type === "delete"}
+        refetch={refetch}
+        currentData={selectedAction?.data}
+        handleChangeAction={handleChangeAction}
+      /> */}
+    </div>
+  );
+};
+
+export default OrderManagement;
