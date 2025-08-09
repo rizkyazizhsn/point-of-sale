@@ -58,7 +58,7 @@ const DetailOrder = ({ id }: { id: string }) => {
   const filteredData = useMemo(() => {
     return (orderMenu?.data || []).map((item, index) => {
       return [
-        currentLimit * (currentPage - 1) + index - 1,
+        currentLimit * (currentPage - 1) + index + 1,
         <div key={item.id} className="flex items-center gap-2">
           <Image
             src={item.menus.image_url}
@@ -100,7 +100,7 @@ const DetailOrder = ({ id }: { id: string }) => {
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between gap-4 w-full">
         <h1 className="text-2xl font-bold">Detail Order</h1>
-        <Link href="">
+        <Link href={`/order/${id}/add`}>
           <Button>Add Order Item</Button>
         </Link>
       </div>

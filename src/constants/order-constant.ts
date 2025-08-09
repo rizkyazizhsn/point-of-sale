@@ -41,3 +41,26 @@ export const HEADER_TABLE_DETAIL_ORDER = [
   "Status",
   "Action"
 ]
+
+export const FILTER_MENU = [
+  {
+    value: '',
+    label: 'All'
+  },
+  {
+    value: 'breakfast',
+    label: 'Breakfast'
+  },
+  {
+    value: 'drinks',
+    label: 'Drinks'
+  },
+  {
+    value: 'beverages',
+    label: 'Beverages'
+  },
+  {
+    value: 'desserts',
+    label: 'Desserts'
+  },
+]

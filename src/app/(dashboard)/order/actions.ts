@@ -2,8 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { FormState } from "@/types/general";
-import { OrderFormState } from "@/types/order";
+import { Cart, OrderFormState } from "@/types/order";
 import { orderSchema } from "@/validations/order-validation";
+import { redirect } from "next/navigation";
 
 export async function createOrder(
   prevState: OrderFormState,
@@ -85,7 +86,8 @@ export async function updateReservation(
     supabase
       .from("tables")
       .update({
-        status: formData.get("status") === 'process' ? 'unavailable' : 'available',
+        status:
+          formData.get("status") === "process" ? "unavailable" : "available",
       })
       .eq("id", formData.get("table_id")),
   ]);
@@ -107,6 +109,28 @@ export async function updateReservation(
   }
 
   return {
-    status: 'success'
+    status: "success",
+  };
+}
+
+export async function addOrderItem(
+  prevState: OrderFormState,
+  data: { order_id: string; items: Cart[] }
+) {
+  const supabase = await createClient();
+
+  const payload = data.items.map(({ total, menu, ...item }) => item);
+
+  const { error } = await supabase.from("orders_menus").insert(payload);
+  if (error) {
+    return {
+      status: "error",
+      errors: {
+        ...prevState,
+        _form: [],
+      },
+    };
   }
+
+  redirect(`/order/${data.order_id}`);
 }
