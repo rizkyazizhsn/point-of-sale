@@ -9,7 +9,7 @@ export const orderFormSchema = z.object({
 export const orderSchema = z.object({
   customer_name: z.string(),
   status: z.string(),
-  // payment_url: z.string(),
+  // payment_token: z.string(),
   table_id: z.string(),
 });
 
