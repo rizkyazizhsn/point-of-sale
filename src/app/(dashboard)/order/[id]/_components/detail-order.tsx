@@ -4,7 +4,6 @@ import DataTable from "@/components/common/data-table";
 import { Button } from "@/components/ui/button";
 import { HEADER_TABLE_DETAIL_ORDER } from "@/constants/order-constant";
 import { useDataTable } from "@/hooks/use-data-table";
-import { createClient } from "@/lib/supabase/client";
 import { cn, convertIDR } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
@@ -26,9 +25,12 @@ import {
 import { EllipsisVertical } from "lucide-react";
 import { updateStatusOrderItem } from "../../actions";
 import { INITIAL_STATE_ACTION } from "@/constants/general-constant";
+import { useAuthStore } from "@/stores/auth-store";
+import { createClientSupabase } from "@/lib/supabase/default";
 
 const DetailOrder = ({ id }: { id: string }) => {
-  const supabase = createClient();
+  const supabase = createClientSupabase();
+  const { profile } = useAuthStore();
   const { currentPage, currentLimit, handleChangePage, handleChangeLimit } =
     useDataTable();
 
@@ -49,6 +51,30 @@ const DetailOrder = ({ id }: { id: string }) => {
     },
     enabled: !!id,
   });
+
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const channel = supabase
+      .channel("change-order")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders_menus",
+          filter: `order_id=eq.${order.id}`,
+        },
+        () => {
+          refetchOrderMenu();
+        }
+      )
+      .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      }
+  }, [order?.id]);
 
   const {
     data: orderMenu,
@@ -79,7 +105,10 @@ const DetailOrder = ({ id }: { id: string }) => {
     INITIAL_STATE_ACTION
   );
 
-  const handleUpdateStatusOrder = async (data: { id: string; status: string }) => {
+  const handleUpdateStatusOrder = async (data: {
+    id: string;
+    status: string;
+  }) => {
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       formData.append(key, value);
@@ -99,7 +128,6 @@ const DetailOrder = ({ id }: { id: string }) => {
 
     if (updateStatusOrderState.status === "success") {
       toast.success("Update status order success");
-      refetchOrderMenu();
     }
   }, [updateStatusOrderState]);
 
@@ -153,7 +181,16 @@ const DetailOrder = ({ id }: { id: string }) => {
               return (
                 item.status &&
                 status && (
-                  <DropdownMenuItem key={status} className="capitalize" onClick={() => handleUpdateStatusOrder({ id: item.id, status: nextStatus})}>
+                  <DropdownMenuItem
+                    key={status}
+                    className="capitalize"
+                    onClick={() =>
+                      handleUpdateStatusOrder({
+                        id: item.id,
+                        status: nextStatus,
+                      })
+                    }
+                  >
                     {nextStatus}
                   </DropdownMenuItem>
                 )
@@ -174,9 +211,11 @@ const DetailOrder = ({ id }: { id: string }) => {
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between gap-4 w-full">
         <h1 className="text-2xl font-bold">Detail Order</h1>
-        <Link href={`/order/${id}/add`}>
-          <Button>Add Order Item</Button>
-        </Link>
+        {profile.role !== "kitchen" && (
+          <Link href={`/order/${id}/add`}>
+            <Button>Add Order Item</Button>
+          </Link>
+        )}
       </div>
       <div className="flex flex-col lg:flex-row gap-4 w-full">
         <div className="lg:w-2/3">

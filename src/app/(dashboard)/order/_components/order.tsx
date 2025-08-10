@@ -2,11 +2,16 @@
 
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import React, { startTransition, useActionState, useEffect, useMemo, useState } from "react";
+import React, {
+  startTransition,
+  useActionState,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
 import { useDataTable } from "@/hooks/use-data-table";
 import DataTable from "@/components/common/data-table";
 import { Dialog, DialogTrigger } from "@/components/ui/dialog";
@@ -18,9 +23,12 @@ import { updateReservation } from "../actions";
 import { INITIAL_STATE_ACTION } from "@/constants/general-constant";
 import { Ban, Link2Icon, ScrollText } from "lucide-react";
 import Link from "next/link";
+import { useAuthStore } from "@/stores/auth-store";
+import { createClientSupabase } from "@/lib/supabase/default";
 
 const OrderManagement = () => {
-  const supabase = createClient();
+  const supabase = createClientSupabase();
+  const { profile } = useAuthStore();
   const {
     currentLimit,
     currentPage,
@@ -33,7 +41,7 @@ const OrderManagement = () => {
   const {
     data: orders,
     isLoading,
-    refetch,
+    refetch: refetchOrders,
   } = useQuery({
     queryKey: ["orders", currentPage, currentLimit, currentSearch],
     queryFn: async () => {
@@ -76,16 +84,37 @@ const OrderManagement = () => {
     },
   });
 
+  useEffect(() => {
+    const channel = supabase
+      .channel("change-order")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+        },
+        () => {
+          refetchOrders();
+          refetchTables();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const [selectedAction, setSelectedAction] = useState<{
     data: Order;
     type: "update" | "delete";
   } | null>(null);
 
-  const handleChangeAction = (open: boolean) => {
-    if (!open) setSelectedAction(null);
-  };
-
-  const  [reservedState, reservedAction] = useActionState(updateReservation, INITIAL_STATE_ACTION);
+  const [reservedState, reservedAction] = useActionState(
+    updateReservation,
+    INITIAL_STATE_ACTION
+  );
 
   const handleReservation = async ({
     id,
@@ -99,25 +128,24 @@ const OrderManagement = () => {
     const formData = new FormData();
     Object.entries({ id, table_id, status }).forEach(([key, value]) => {
       formData.append(key, value);
-    })
+    });
     startTransition(() => {
-      reservedAction(formData)
-    })
-  }
+      reservedAction(formData);
+    });
+  };
 
   useEffect(() => {
     if (reservedState.status === "error") {
       toast.error("Update Reservation Failed", {
-        description: reservedState.errors?._form?.[0]
-      })
+        description: reservedState.errors?._form?.[0],
+      });
     }
 
     if (reservedState.status === "success") {
-      toast.success("Update Reservation Success")
-      refetch()
-      refetchTables()
+      toast.success("Update Reservation Success");
+      refetchOrders();
     }
-  })
+  });
 
   const reservedActionList = [
     {
@@ -128,8 +156,8 @@ const OrderManagement = () => {
         </span>
       ),
       action: (id: string, table_id: string) => {
-        handleReservation({ id, table_id, status: "process" })
-      }
+        handleReservation({ id, table_id, status: "process" });
+      },
     },
     {
       label: (
@@ -139,10 +167,10 @@ const OrderManagement = () => {
         </span>
       ),
       action: (id: string, table_id: string) => {
-        handleReservation({ id, table_id, status: "canceled" })
-      }
-    }
-  ]
+        handleReservation({ id, table_id, status: "canceled" });
+      },
+    },
+  ];
 
   const filteredData = useMemo(() => {
     return (orders?.data || []).map((order, index) => {
@@ -165,20 +193,29 @@ const OrderManagement = () => {
         <DropdownAction
           key={order.id}
           menu={
-            order.status === 'reserved' ? reservedActionList.map((item) => ({
-              label: item.label,
-              action: () => item.action(order.id, (order.tables as unknown as { id: string }).id)
-            })) : [
-              {
-                label: (
-                  <Link href={`/order/${order.order_id}`} className="flex items-center gap-2">
-                    <ScrollText className="text-sky-500" />
-                    Detail
-                  </Link>
-                ),
-                type: 'link'
-              }
-            ]
+            order.status === "reserved" && profile.role !== "kitchen"
+              ? reservedActionList.map((item) => ({
+                  label: item.label,
+                  action: () =>
+                    item.action(
+                      order.id,
+                      (order.tables as unknown as { id: string }).id
+                    ),
+                }))
+              : [
+                  {
+                    label: (
+                      <Link
+                        href={`/order/${order.order_id}`}
+                        className="flex items-center gap-2"
+                      >
+                        <ScrollText className="text-sky-500" />
+                        Detail
+                      </Link>
+                    ),
+                    type: "link",
+                  },
+                ]
           }
         />,
       ];
@@ -194,18 +231,20 @@ const OrderManagement = () => {
   return (
     <div className="w-full">
       <div className="flex flex-col lg:flex-row mb-4 gap-2 justify-between w-full">
-        <h1 className="text-2xl font-bold">Table Management</h1>
+        <h1 className="text-2xl font-bold">Order Management</h1>
         <div className="flex gap-2">
           <Input
             placeholder="Search by name"
             onChange={(e) => handleChangeSearch(e.target.value)}
           />
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant={"outline"}>Create</Button>
-            </DialogTrigger>
-            <DialogCreateOrder tables={tables} refetch={refetch} />
-          </Dialog>
+          {profile.role !== "kitchen" && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant={"outline"}>Create</Button>
+              </DialogTrigger>
+              <DialogCreateOrder tables={tables} />
+            </Dialog>
+          )}
         </div>
       </div>
       <DataTable
@@ -218,19 +257,6 @@ const OrderManagement = () => {
         onChangePage={handleChangePage}
         onChangeLimit={handleChangeLimit}
       />
-      {/* <DialogUpdateTable
-        open={selectedAction !== null && selectedAction.type === "update"}
-        refetch={refetch}
-        currentData={selectedAction?.data}
-        handleChangeAction={handleChangeAction}
-      />
-
-      <DialogDeleteTable
-        open={selectedAction !== null && selectedAction.type === "delete"}
-        refetch={refetch}
-        currentData={selectedAction?.data}
-        handleChangeAction={handleChangeAction}
-      /> */}
     </div>
   );
 };

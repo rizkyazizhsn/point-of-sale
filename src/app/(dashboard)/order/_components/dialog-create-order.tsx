@@ -25,10 +25,8 @@ import React, { startTransition, useActionState, useEffect } from "react";
 import { OrderForm, orderFormSchema } from "@/validations/order-validation";
 
 const DialogCreateOrder = ({
-  refetch,
   tables,
 }: {
-  refetch: () => void;
   tables: Table[] | undefined | null;
 }) => {
   const form = useForm<OrderForm>({
@@ -62,7 +60,6 @@ const DialogCreateOrder = ({
       toast.success("Create order success");
       form.reset();
       document.querySelector<HTMLButtonElement>('[data-state="open"]')?.click();
-      refetch();
     }
   }, [createOrderState]);
   return (
